@@ -288,7 +288,7 @@ export function useThreadRun({
         x.completed = true
         break
       default:
-      // throw new Error('Unknown event ' + JSON.stringify(x))
+        throw new Error('Unknown event ' + JSON.stringify(x))
     }
 
     return x
