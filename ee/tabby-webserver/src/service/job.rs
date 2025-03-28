@@ -7,6 +7,7 @@ use tabby_schema::{
     AsID, AsRowid, Result,
 };
 use tokio::fs::read_to_string;
+use tracing::warn;
 
 use super::graphql_pagination_to_filter;
 use crate::{path::background_jobs_dir, service::background_job::BackgroundJobEvent};
@@ -70,7 +71,7 @@ impl JobService for JobControllerImpl {
         for job in jobs.iter_mut() {
             if job.stdout.is_empty() {
                 // it is possible that the job is starting to run and the stdout is not yet available
-                if let Ok(stdout) = self.read_job_stdout(job.id.as_rowid()?).await {
+                if let Ok(stdout) = self.read_job_stdout(job.id.clone().to_string()).await {
                     job.stdout = stdout;
                 }
             }
@@ -91,7 +92,7 @@ impl JobService for JobControllerImpl {
 
         if job_run.stdout.is_empty() {
             // it is possible that the job is starting to run and the stdout is not yet available
-            if let Ok(stdout) = self.read_job_stdout(job_run.id.as_rowid()?).await {
+            if let Ok(stdout) = self.read_job_stdout(job_run.id.to_string()).await {
                 job_run.stdout = stdout;
             }
         }
@@ -113,42 +114,17 @@ impl JobService for JobControllerImpl {
 }
 
 impl JobControllerImpl {
-    async fn read_job_stdout(&self, id: i64) -> Result<String> {
-        let mut log_files = background_jobs_dir()
-            .join(format!("{}", id))
-            .read_dir()
-            .context("Failed to read log directory")?
-            .filter_map(|entry| {
-                entry.ok().and_then(|entry| {
-                    let path = entry.path();
-                    if path.is_file()
-                        && path
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .starts_with("stdout")
-                    {
-                        Some(path)
-                    } else {
-                        None
-                    }
-                })
-            })
-            .collect::<Vec<_>>();
+    async fn read_job_stdout(&self, id: String) -> Result<String> {
+        let log_file = background_jobs_dir().join(id).join("stdout.log");
 
-        if !log_files.is_empty() {
-            log_files.sort();
-            let mut stdout = String::new();
-            for log_file in log_files {
-                stdout = format!(
-                    "{}{}",
-                    stdout,
-                    read_to_string(log_file)
-                        .await
-                        .context("Failed to read log file")?
-                );
+        if log_file.exists() {
+            match read_to_string(log_file).await {
+                Ok(stdout) => Ok(stdout),
+                Err(err) => {
+                    warn!("Failed to read log file: {:?}", err);
+                    Ok(String::new())
+                }
             }
-            Ok(stdout.trim().to_string())
         } else {
             Ok(String::new())
         }

@@ -36,6 +36,7 @@ import {
   ListFilter,
   ListTree,
   Mail,
+  MessageSquare,
   MessagesSquare,
   Moon,
   PanelLeft,
@@ -848,6 +849,7 @@ function IconCode({ className, ...props }: React.ComponentProps<'svg'>) {
         fill="currentColor"
         fillRule="evenodd"
         clipRule="evenodd"
+        strokeWidth={2}
       ></path>
     </svg>
   )
@@ -1633,6 +1635,13 @@ function IconFiles({
   return <Files className={cn('h-4 w-4', className)} {...props} />
 }
 
+function IconMessageSquare({
+  className,
+  ...props
+}: React.ComponentProps<typeof MessageSquare>) {
+  return <MessageSquare className={cn('h-4 w-4', className)} {...props} />
+}
+
 function IconRegex({
   className,
   ...props
@@ -1891,5 +1900,6 @@ export {
   IconBell,
   IconListTree,
   IconCheckFull,
-  IconBookOpen
+  IconBookOpen,
+  IconMessageSquare
 }

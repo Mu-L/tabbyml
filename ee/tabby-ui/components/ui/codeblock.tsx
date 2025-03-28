@@ -4,6 +4,7 @@
 'use client'
 
 import { FC, memo, useState } from 'react'
+import { PlayCircle } from 'lucide-react'
 import {
   createElement,
   Prism as SyntaxHighlighter
@@ -36,6 +37,7 @@ export interface CodeBlockProps {
   ) => void
   canWrapLongLines: boolean | undefined
   supportsOnApplyInEditorV2: boolean
+  runShell?: (command: string) => Promise<void>
 }
 
 interface languageMap {
@@ -69,6 +71,22 @@ export const programmingLanguages: languageMap = {
   // add more file extensions here, make sure the key is same as language prop in CodeBlock.tsx component
 }
 
+const commonShells = [
+  'sh',
+  'bash',
+  'zsh',
+  'fish',
+  'csh',
+  'tcsh',
+  'ksh',
+  'dash',
+  'cmd',
+  'powershell',
+  'pwsh',
+  'shell'
+  // add more common shells here
+]
+
 export const generateRandomString = (length: number, lowercase = false) => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXY3456789' // excluding similar looking characters like Z, 2, I, 1, O, 0
   let result = ''
@@ -85,7 +103,8 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     onCopyContent,
     onApplyInEditor,
     canWrapLongLines,
-    supportsOnApplyInEditorV2
+    supportsOnApplyInEditorV2,
+    runShell
   }) => {
     const [wrapLongLines, setWrapLongLines] = useState(false)
     const { isCopied, copyToClipboard } = useCopyToClipboard({
@@ -98,6 +117,12 @@ const CodeBlock: FC<CodeBlockProps> = memo(
       copyToClipboard(value)
     }
 
+    const onRunCommand = () => {
+      if (runShell && commonShells.includes(language.toLowerCase())) {
+        runShell(value)
+      }
+    }
+
     // react-syntax-highlighter does not render .toml files correctly
     // using bash syntax as a workaround for better display
     const languageForSyntax = language === 'toml' ? 'bash' : language
@@ -106,6 +131,24 @@ const CodeBlock: FC<CodeBlockProps> = memo(
         <div className="flex w-full items-center justify-between bg-zinc-800 px-6 py-2 pr-4 text-zinc-100">
           <span className="text-xs lowercase">{language}</span>
           <div className="flex items-center space-x-1">
+            {runShell && commonShells.includes(language.toLowerCase()) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                    onClick={onRunCommand}
+                  >
+                    <PlayCircle className="h-4 w-4" />
+                    <span className="sr-only">Run Command</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="m-0">Run Command</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             {canWrapLongLines && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -123,47 +166,50 @@ const CodeBlock: FC<CodeBlockProps> = memo(
                 </TooltipContent>
               </Tooltip>
             )}
-            {supportsOnApplyInEditorV2 && onApplyInEditor && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                    onClick={() =>
-                      onApplyInEditor(value, {
-                        languageId: language,
-                        smart: true
-                      })
-                    }
-                  >
-                    <IconSmartApplyInEditor />
-                    <span className="sr-only">Smart Apply in Editor</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="m-0">Smart Apply in Editor</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {onApplyInEditor && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                    onClick={() => onApplyInEditor(value, undefined)}
-                  >
-                    <IconApplyInEditor />
-                    <span className="sr-only">Apply in Editor</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="m-0">Apply in Editor</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {supportsOnApplyInEditorV2 &&
+              onApplyInEditor &&
+              !(runShell && commonShells.includes(language.toLowerCase())) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                      onClick={() =>
+                        onApplyInEditor(value, {
+                          languageId: language,
+                          smart: true
+                        })
+                      }
+                    >
+                      <IconSmartApplyInEditor />
+                      <span className="sr-only">Smart Apply in Editor</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="m-0">Smart Apply in Editor</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            {onApplyInEditor &&
+              !(runShell && commonShells.includes(language.toLowerCase())) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                      onClick={() => onApplyInEditor(value, undefined)}
+                    >
+                      <IconApplyInEditor />
+                      <span className="sr-only">Apply in Editor</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="m-0">Apply in Editor</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

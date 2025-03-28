@@ -100,6 +100,11 @@
         "category": "Tabby"
       },
       {
+        "command": "tabby.chat.codeReviewCodeBlock",
+        "title": "Code Review",
+        "category": "Tabby"
+      },
+      {
         "command": "tabby.chat.generateCodeBlockDoc",
         "title": "Generate Docs",
         "category": "Tabby"
@@ -114,6 +119,12 @@
         "title": "Generate Commit Message",
         "category": "Tabby",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "tabby.chat.generateBranchName",
+        "title": "Create Branch with Suggestions",
+        "category": "Tabby",
+        "icon": "$(git-branch)"
       },
       {
         "command": "tabby.chat.edit.start",
@@ -153,6 +164,11 @@
         "icon": "$(history)",
         "enablement": "tabby.chatSidePanelStatus === 'ready'",
         "category": "Tabby"
+      },
+      {
+        "command": "tabby.toggleLanguageInlineCompletion",
+        "title": "Enable/Disable Inline Completion for Current Language",
+        "category": "Tabby"
       }
     ],
     "submenus": [
@@ -169,14 +185,24 @@
           "group": "tabby.submenu.0edit@1"
         },
         {
+          "command": "tabby.chat.explainCodeBlock",
+          "when": "editorHasSelection && tabby.chatEnabled",
+          "group": "tabby.submenu.1edit@1"
+        },
+        {
+          "command": "tabby.chat.codeReviewCodeBlock",
+          "when": "editorHasSelection && tabby.chatEnabled",
+          "group": "tabby.submenu.1edit@2"
+        },
+        {
           "command": "tabby.chat.addRelevantContext",
           "when": "editorHasSelection && tabby.chatEnabled",
-          "group": "tabby.submenu.1chat@1"
+          "group": "tabby.submenu.2chat@1"
         },
         {
           "command": "tabby.chat.addFileContext",
           "when": "tabby.chatEnabled",
-          "group": "tabby.submenu.1chat@2"
+          "group": "tabby.submenu.2chat@2"
         }
       ],
       "commandPalette": [
@@ -213,6 +239,10 @@
           "when": "false"
         },
         {
+          "command": "tabby.chat.generateBranchName",
+          "when": "tabby.chatEnabled"
+        },
+        {
           "command": "tabby.chat.edit.start",
           "when": "tabby.chatEnabled"
         },
@@ -240,6 +270,11 @@
           "command": "tabby.chat.generateCommitMessage",
           "when": "tabby.chatEnabled",
           "group": "navigation@-1"
+        },
+        {
+          "command": "tabby.chat.generateBranchName",
+          "when": "tabby.chatEnabled",
+          "group": "navigation@-2"
         }
       ],
       "view/title": [
@@ -357,6 +392,14 @@
                   "Automatic trigger when you stop typing",
                   "Manual trigger by pressing `Alt + \\`"
                 ]
+              },
+              "inlineCompletion.disabledLanguages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [],
+                "description": "List of language IDs for which code completion should be disabled. Use the 'Toggle Single Language Inline Completion' command to easily enable or disable completion for the current language."
               },
               "chatEdit.history": {
                 "type": "integer",
